@@ -1,0 +1,24 @@
+# Utiliser une image de base PHP Apache avec support SSL
+FROM php:apache
+
+# Définir le répertoire de travail
+WORKDIR /var/www/html
+
+# Copier les fichiers HTML, PHP et le fichier de traitement des paiements dans le conteneur
+COPY site-https/* /var/www/html/
+
+# Copier les fichiers SSL
+COPY ssl/server.crt /etc/apache2/ssl/server.crt
+COPY ssl/server.key /etc/apache2/ssl/server.key
+
+# Activer le module SSL d'Apache
+RUN a2enmod ssl
+
+# Configurer Apache pour utiliser SSL
+COPY apache-config-https.conf /etc/apache2/sites-available/000-default.conf
+
+# Exposer le port 443 pour le trafic HTTPS
+EXPOSE 443
+
+# Démarrer Apache au lancement du conteneur
+CMD ["apache2-foreground"]

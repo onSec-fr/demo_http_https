@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Formulaire de Paiement</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f2f4f8;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .payment-container {
+      background: #fff;
+      padding: 30px 40px;
+      border-radius: 12px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+      max-width: 400px;
+      width: 100%;
+    }
+
+    .payment-container h1 {
+      font-size: 1.4rem;
+      text-align: center;
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: bold;
+      font-size: 0.9rem;
+      color: #444;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus, select:focus {
+      border-color: #0066ff;
+    }
+
+    .flex-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .flex-row .form-group {
+      flex: 1;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 12px;
+      background: #0066ff;
+      color: #fff;
+      font-size: 1rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 10px;
+    }
+
+    .submit-btn:hover {
+      background: #0044cc;
+    }
+
+    .secure-msg {
+      text-align: center;
+      margin-top: 15px;
+      font-size: 0.8rem;
+      color: #777;
+    }
+
+    /* Écrans plein page */
+    .overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: #f2f4f8;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      flex-direction: column;
+    }
+
+    .overlay h2 {
+      font-size: 2rem;
+      color: #0066ff;
+      margin-bottom: 10px;
+    }
+
+    .overlay p {
+      font-size: 1rem;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div class="payment-container" id="paymentForm">
+    <h1>Paiement en ligne</h1>
+    <form id="form" method="POST" action="process-payment.php">
+      <div class="form-group">
+        <label for="cardName">Nom du titulaire</label>
+        <input type="text" id="cardName" name="cardName" placeholder="Jean Dupont" required>
+      </div>
+
+      <div class="form-group">
+        <label for="creditCardNumber">Numéro de carte</label>
+        <input type="text" id="creditCardNumber" name="creditCardNumber" placeholder="1234 5678 9012 3456" maxlength="19" required>
+      </div>
+
+      <div class="flex-row">
+        <div class="form-group">
+          <label for="expiryMonth">Mois</label>
+          <select id="expiryMonth" name="expiryMonth" required>
+            <option value="" disabled selected>MM</option>
+            <option>01</option><option>02</option><option>03</option>
+            <option>04</option><option>05</option><option>06</option>
+            <option>07</option><option>08</option><option>09</option>
+            <option>10</option><option>11</option><option>12</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="expiryYear">Année</label>
+          <select id="expiryYear" name="expiryYear" required>
+            <option value="" disabled selected>AA</option>
+            <option>2025</option><option>2026</option><option>2027</option>
+            <option>2028</option><option>2029</option><option>2030</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="cvv">CVC</label>
+          <input type="text" id="cvv" name="cvv" placeholder="123" maxlength="4" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="amount">Montant (€)</label>
+        <input type="number" id="amount" name="amount" min="1" step="0.01" placeholder="100.00" required>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Adresse email</label>
+        <input type="email" id="email" name="email" placeholder="jean.dupont@email.com" required>
+      </div>
+
+      <button type="submit" class="submit-btn">Payer</button>
+
+      <p class="secure-msg">🔒 Ce site est en HTTP (non sécurisé) – Démo uniquement</p>
+    </form>
+  </div>
+
+  <!-- Écran de traitement -->
+  <div class="overlay" id="processing">
+    <h2>⏳ Traitement du paiement...</h2>
+    <p>Merci de patienter quelques secondes.</p>
+  </div>
+
+  <!-- Écran de confirmation -->
+  <div class="overlay" id="confirmation">
+    <h2>✅ Paiement confirmé !</h2>
+    <p>Merci pour votre achat.<br>Un reçu a été envoyé à votre adresse email.</p>
+  </div>
+
+  <script>
+    const form = document.getElementById("form");
+    const paymentForm = document.getElementById("paymentForm");
+    const processing = document.getElementById("processing");
+    const confirmation = document.getElementById("confirmation");
+
+    form.addEventListener("submit", function(e) {
+      e.preventDefault(); // Empêche le rechargement de la page
+
+      if (form.checkValidity()) {
+        paymentForm.style.display = "none";
+        processing.style.display = "flex";
+
+        // Préparer les données du formulaire
+        const formData = new FormData(form);
+
+        // Envoyer au serveur via fetch
+        fetch(form.action, {
+          method: "POST",
+          body: formData
+        })
+        .then(response => response.text()) // tu peux mettre .json() si ton PHP renvoie du JSON
+        .then(data => {
+          console.log("Réponse du serveur :", data);
+
+          processing.style.display = "none";
+          confirmation.style.display = "flex";
+        })
+        .catch(error => {
+          console.error("Erreur:", error);
+          processing.style.display = "none";
+          alert("Une erreur est survenue lors du paiement.");
+        });
+      } else {
+        form.reportValidity();
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+# Utiliser une image de base PHP Apache
+FROM php:apache
+
+# Copier les fichiers du site
+COPY site-http/ /var/www/html/
+
+# Exposer le port 80 pour le trafic HTTP
+EXPOSE 80
+
+# Démarrer Apache au lancement du conteneur
+CMD ["apache2-foreground"]
